@@ -13,38 +13,28 @@ const client = axios.create({
   },
 });
 console.log('API Key:', apiKey);
-// const { OpenAIAPI } = require('openai');
-// const openai = new OpenAIAPI({
-//     key: OPENAI_API_KEY,
-//     model: 'text-davinci-003'
-// });
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-// /**
-//  * @param {vscode.ExtensionContext} context
-//  */
-function activate(context) {
+async function activate(context) {
 
 	console.log('Congratulations, your extension "auto-code-documentation" is now active!');
 
-	let disposable = vscode.commands.registerCommand('auto-code-documentation.extension', () =>{
+	let disposable = vscode.commands.registerCommand('auto-code-documentation.extension', async () => {
 		const editor = vscode.window.activeTextEditor;
     if (editor) {
         const selection = editor.selection;
         const selectedCode = editor.document.getText(selection);
-
+        // Check if any code is selected
+        if (selectedCode.trim() === '') {
+          vscode.window.showErrorMessage('No code selected!');
+          return;
+      }
         // Logic to generate documentation from selectedCode
-        const documentation = generateDocumentation(selectedCode);
+        const documentation = await generateDocumentation(selectedCode);
 
         // Display the generated documentation in a new editor tab
         vscode.workspace.openTextDocument({ content: documentation, language: 'markdown' }).then(document => {
             vscode.window.showTextDocument(document, vscode.ViewColumn.Beside);
         });
-    }
-    else {
-        vscode.window.showErrorMessage('No code selected!');
     }
 		vscode.window.showInformationMessage('Hello World from Auto Code Documentation!');
 	});
@@ -59,23 +49,23 @@ module.exports = {
 	activate,
 	deactivate
 }
-async function generateDocumentation(selectedCode) {
-    const params= {
-      model: "text-davinci-003",
-         prompt:`Generate comprehensive documentation for the following code:\n\n${selectedCode}. Provide descriptions for functions, classes, and variables.
-         Explain the purpose and usage of each function and class.`,
-           
-            max_tokens: 500,
-            temperature: 1,
-        };
-        try {
-          const response = await client.post("https://api.openai.com/v1/completions", params);
-        console.log('Generated Documentation:', JSON.stringify(response.data.choices[0].text, null, 2));
-        return JSON.stringify(response.data.choices[0].text, null, 2);
 
-      } catch (error) {
-          console.error('Error generating documentation:', error);
-          return 'Error generating documentation.';
-      }
+async function generateDocumentation(selectedCode) {
+  const params= {
+    model: "text-davinci-003",
+       prompt:`Generate comprehensive documentation for the following code:\n\n${selectedCode}. Provide descriptions for functions, classes, and variables.
+       Explain the purpose and usage of each function and class.`,
+         
+          max_tokens: 500,
+          temperature: 1,
+      };
+      try {
+        const response = await client.post("https://api.openai.com/v1/completions", params);
+      return response.data.choices[0].text;
+
+    } catch (error) {
+        console.error('Error generating documentation:', error);
+        return 'Error generating documentation.';
+    }
 
 }
