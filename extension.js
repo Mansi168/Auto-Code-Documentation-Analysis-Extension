@@ -61,15 +61,18 @@ module.exports = {
 }
 async function generateDocumentation(selectedCode) {
     const params= {
-         prompt:`Generate documentation for the following code:\n\n${selectedCode}\n\nDocumentation:`,
-            model: "text-davinci-003",
-            max_tokens: 2048,
+      model: "text-davinci-003",
+         prompt:`Generate comprehensive documentation for the following code:\n\n${selectedCode}. Provide descriptions for functions, classes, and variables.
+         Explain the purpose and usage of each function and class.`,
+           
+            max_tokens: 500,
             temperature: 1,
         };
         try {
           const response = await client.post("https://api.openai.com/v1/completions", params);
-          console.log('OpenAI API Response:', response);
-          return response.data.choices[0].text;
+        console.log('Generated Documentation:', JSON.stringify(response.data.choices[0].text, null, 2));
+        return JSON.stringify(response.data.choices[0].text, null, 2);
+
       } catch (error) {
           console.error('Error generating documentation:', error);
           return 'Error generating documentation.';
